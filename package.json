@@ -1,0 +1,15 @@
+{
+  "name": "cs2-demo-ai-coach",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Evidence-driven CS2 demo review MVP.",
+  "scripts": {
+    "build:parser": "mkdir -p bin .cache/go-build && GOCACHE=$(pwd)/.cache/go-build go build -buildvcs=false -o bin/cs2-demoparser ./cmd/demoparser",
+    "start": "node src/server.js",
+    "test": "node --test --test-isolation=none"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

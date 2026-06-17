@@ -1,0 +1,13 @@
+node_modules/
+npm-debug.log*
+bin/
+.cache/
+
+data/uploads/*
+data/reports/*
+data/feedback/*
+!data/uploads/.gitkeep
+!data/reports/.gitkeep
+!data/feedback/.gitkeep
+
+.DS_Store

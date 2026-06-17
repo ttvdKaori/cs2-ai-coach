@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CS2 Demo AI Coach</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">C2</div>
+          <div>
+            <h1>CS2 Demo AI Coach</h1>
+            <p>Mirage evidence report MVP</p>
+          </div>
+        </div>
+
+        <section class="panel upload-panel">
+          <div class="panel-heading">
+            <h2>Demo</h2>
+            <span class="badge">.dem</span>
+          </div>
+          <label class="drop-zone" id="dropZone">
+            <input id="fileInput" type="file" accept=".dem">
+            <span class="upload-icon">↑</span>
+            <span class="drop-title">上传 Mirage demo</span>
+            <span class="drop-subtitle">支持本地 .dem，MVP 上限 500 MB</span>
+          </label>
+          <div class="progress-wrap" aria-live="polite">
+            <div class="progress-meta">
+              <span id="uploadStatus">等待上传</span>
+              <span id="uploadPercent">0%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-bar" id="uploadProgress"></div>
+            </div>
+          </div>
+          <button id="sampleButton" class="secondary-button" type="button">生成样例报告</button>
+        </section>
+
+        <section class="panel history-panel">
+          <div class="panel-heading">
+            <h2>历史报告</h2>
+            <button id="refreshHistory" class="icon-button" type="button" title="刷新历史">↻</button>
+          </div>
+          <div id="historyList" class="history-list empty-state">暂无报告</div>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">证据驱动复盘</p>
+            <h2 id="pageTitle">上传 demo 开始分析</h2>
+          </div>
+          <div class="topbar-actions">
+            <button id="copyShareLink" class="secondary-button disabled" type="button" disabled>复制分享链接</button>
+            <a id="exportLink" class="secondary-button disabled" href="#" aria-disabled="true">导出 Markdown</a>
+          </div>
+        </header>
+
+        <section id="setupSection" class="setup-grid">
+          <div class="panel match-panel">
+            <div class="panel-heading">
+              <h2>比赛概览</h2>
+              <span id="parserBadge" class="badge muted">未解析</span>
+            </div>
+            <div id="matchSummary" class="empty-state">
+              上传 demo 后会显示地图、比分、玩家、回合和解析器状态。
+            </div>
+          </div>
+
+          <div class="panel selection-panel">
+            <div class="panel-heading">
+              <h2>选择队伍</h2>
+              <span id="selectedCount" class="badge muted">0 / 5</span>
+            </div>
+            <div id="playerList" class="player-list empty-state">等待解析玩家列表</div>
+            <label class="field">
+              <span>重点分析对象</span>
+              <select id="focusPlayer" disabled>
+                <option>先选择五名队员</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>目标位置</span>
+              <select id="targetRole">
+                <option value="Auto">自动判断</option>
+                <option value="Entry">Entry</option>
+                <option value="Second entry">Second entry</option>
+                <option value="Support">Support</option>
+                <option value="Lurker">Lurker</option>
+                <option value="AWPer">AWPer</option>
+                <option value="Anchor">Anchor</option>
+                <option value="Rotator">Rotator</option>
+                <option value="Clutcher">Clutcher</option>
+                <option value="IGL tendency">IGL 倾向</option>
+              </select>
+            </label>
+            <button id="createReport" class="primary-button" type="button" disabled>生成复盘报告</button>
+            <p id="selectionHint" class="hint">需要选择己方五名玩家和一个重点分析对象。</p>
+          </div>
+        </section>
+
+        <section id="reportSection" class="report-section hidden">
+          <nav class="tabs" aria-label="报告视图">
+            <button class="tab active" data-tab="overview" type="button">概览</button>
+            <button class="tab" data-tab="personal" type="button">个人</button>
+            <button class="tab" data-tab="team" type="button">团队</button>
+            <button class="tab" data-tab="rounds" type="button">关键回合</button>
+            <button class="tab" data-tab="tactics" type="button">战术</button>
+            <button class="tab" data-tab="training" type="button">训练</button>
+          </nav>
+          <div id="reportContent" class="report-content"></div>
+        </section>
+      </main>
+    </div>
+
+    <template id="statTemplate">
+      <div class="stat">
+        <span class="stat-label"></span>
+        <strong class="stat-value"></strong>
+      </div>
+    </template>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
