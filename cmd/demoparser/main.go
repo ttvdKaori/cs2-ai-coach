@@ -128,11 +128,24 @@ type playerStats struct {
 	openingWins      int
 	firstDeaths      int
 	tradeKills       int
+	tradedDeaths     int
+	tradeTimeSum     float64
+	kastRounds       int
+	roundsPlayed     int
 	flashAssists     int
 	utilityDamage    int
 	enemiesFlashed   int
 	teammatesFlashed int
 	locationCounts   map[string]int
+}
+
+// killRecord remembers a kill so later kills can be classified as trades
+// (a teammate of the victim avenging the death within a short window).
+type killRecord struct {
+	killerSteam  uint64
+	victimSteam  uint64
+	victimTeamID string
+	time         time.Duration
 }
 
 type parserState struct {
@@ -147,7 +160,14 @@ type parserState struct {
 	stats        map[uint64]*playerStats
 	teams        map[string]string
 	roundKills   map[int]int
+	recentKills  []killRecord
+	roundKill    map[uint64]bool
+	roundAssist  map[uint64]bool
+	roundDied    map[uint64]bool
+	roundTraded  map[uint64]bool
 }
+
+const tradeWindow = 5 * time.Second
 
 func main() {
 	log.SetOutput(os.Stderr)
@@ -191,6 +211,10 @@ func parse(path string) (output, error) {
 		stats:        map[uint64]*playerStats{},
 		teams:        map[string]string{"team_a": "Team A", "team_b": "Team B"},
 		roundKills:   map[int]int{},
+		roundKill:    map[uint64]bool{},
+		roundAssist:  map[uint64]bool{},
+		roundDied:    map[uint64]bool{},
+		roundTraded:  map[uint64]bool{},
 	}
 	registerHandlers(state)
 
@@ -238,6 +262,7 @@ func registerHandlers(s *parserState) {
 	s.parser.RegisterEventHandler(func(e events.RoundStart) {
 		s.currentRound++
 		number := s.currentRound
+		s.resetRoundTracking()
 		s.capturePlayers()
 		round := roundInfo{
 			Number:       number,
@@ -246,7 +271,7 @@ func registerHandlers(s *parserState) {
 			SideByTeam:   s.currentSideByTeam(),
 			ScoreBefore:  s.score,
 			EconomyType:  currentEconomyType(s.parser.GameState()),
-			Economy:      currentEconomySnapshot(s.parser.GameState()),
+			Economy:      s.currentEconomySnapshot(),
 			Result:       "in progress",
 			EndReason:    "",
 			Tags:         []string{},
@@ -273,6 +298,7 @@ func registerHandlers(s *parserState) {
 		if hasTag(round.Tags, "opening_death_swing") {
 			round.Tags = appendUnique(round.Tags, "key_round")
 		}
+		s.recordKAST()
 	})
 
 	s.parser.RegisterEventHandler(func(e events.Kill) {
@@ -300,6 +326,7 @@ func registerHandlers(s *parserState) {
 		}
 		s.addEvent(number, event)
 		s.updateKillStats(e, s.roundKills[number] == 1)
+		s.recordTrade(e)
 		if s.roundKills[number] == 1 && e.Victim != nil {
 			s.addEvidence(evidenceInfo{
 				ID:          fmt.Sprintf("ev_r%d_first_death_%s", number, victimID),
@@ -390,7 +417,7 @@ func (s *parserState) ensureRound() int {
 			SideByTeam:  s.currentSideByTeam(),
 			ScoreBefore: s.score,
 			EconomyType: currentEconomyType(s.parser.GameState()),
-			Economy:     currentEconomySnapshot(s.parser.GameState()),
+			Economy:     s.currentEconomySnapshot(),
 			Tags:        []string{},
 			Events:      []eventInfo{},
 		})
@@ -541,6 +568,7 @@ func (s *parserState) updateKillStats(e events.Kill, opening bool) {
 	if e.Killer != nil {
 		st := s.ensureStats(e.Killer)
 		st.kills++
+		s.roundKill[e.Killer.SteamID64] = true
 		if opening {
 			st.openingAttempts++
 			st.openingWins++
@@ -549,13 +577,75 @@ func (s *parserState) updateKillStats(e events.Kill, opening bool) {
 	if e.Victim != nil {
 		st := s.ensureStats(e.Victim)
 		st.deaths++
+		s.roundDied[e.Victim.SteamID64] = true
 		if opening {
+			// The player who lost the opening duel also attempted it; counting
+			// only winners made openingDuelWinRate meaningless (~100%).
+			st.openingAttempts++
 			st.firstDeaths++
 		}
 	}
 	if e.Assister != nil {
 		s.ensureStats(e.Assister).assists++
+		s.roundAssist[e.Assister.SteamID64] = true
 	}
+}
+
+// recordTrade classifies a kill as a trade when the killer avenges a teammate
+// who was killed by this victim within the trade window, then remembers the
+// kill so it can be traded in turn.
+func (s *parserState) recordTrade(e events.Kill) {
+	if e.Killer == nil || e.Victim == nil {
+		return
+	}
+	now := s.parser.CurrentTime()
+	killerTeam := s.ensureStats(e.Killer).teamID
+	for i := len(s.recentKills) - 1; i >= 0; i-- {
+		rk := s.recentKills[i]
+		if now-rk.time > tradeWindow {
+			break
+		}
+		if rk.killerSteam == e.Victim.SteamID64 && rk.victimTeamID == killerTeam {
+			killerSt := s.ensureStats(e.Killer)
+			killerSt.tradeKills++
+			killerSt.tradeTimeSum += (now - rk.time).Seconds()
+			if victimSt, ok := s.stats[rk.victimSteam]; ok {
+				victimSt.tradedDeaths++
+			}
+			s.roundTraded[rk.victimSteam] = true
+			break
+		}
+	}
+	s.recentKills = append(s.recentKills, killRecord{
+		killerSteam:  e.Killer.SteamID64,
+		victimSteam:  e.Victim.SteamID64,
+		victimTeamID: s.ensureStats(e.Victim).teamID,
+		time:         now,
+	})
+}
+
+// recordKAST credits each player still in the round with a KAST round when they
+// got a kill or assist, survived, or had their death traded.
+func (s *parserState) recordKAST() {
+	for _, p := range s.parser.GameState().Participants().Playing() {
+		if p == nil {
+			continue
+		}
+		st := s.ensureStats(p)
+		st.roundsPlayed++
+		sid := p.SteamID64
+		if s.roundKill[sid] || s.roundAssist[sid] || !s.roundDied[sid] || s.roundTraded[sid] {
+			st.kastRounds++
+		}
+	}
+}
+
+func (s *parserState) resetRoundTracking() {
+	s.recentKills = s.recentKills[:0]
+	s.roundKill = map[uint64]bool{}
+	s.roundAssist = map[uint64]bool{}
+	s.roundDied = map[uint64]bool{}
+	s.roundTraded = map[uint64]bool{}
 }
 
 func (s *parserState) ensureStats(p *common.Player) *playerStats {
@@ -600,6 +690,7 @@ func (s *parserState) players() []playerInfo {
 	for _, st := range s.stats {
 		deaths := max(1, st.deaths)
 		rounds := max(1, len(s.rounds))
+		played := max(1, st.roundsPlayed)
 		openingRate := ratio(st.openingWins, max(1, st.openingAttempts))
 		firstDeathRate := ratio(st.firstDeaths, rounds)
 		players = append(players, playerInfo{
@@ -616,13 +707,13 @@ func (s *parserState) players() []playerInfo {
 				"assists":              st.assists,
 				"kd":                   roundFloat(float64(st.kills)/float64(deaths), 2),
 				"adr":                  int(math.Round(float64(st.damage) / float64(rounds))),
-				"kast":                 "0%",
+				"kast":                 percent(ratio(st.kastRounds, played)),
 				"openingDuelWinRate":   percent(openingRate),
 				"firstDeathRate":       percent(firstDeathRate),
 				"firstKillRate":        percent(ratio(st.openingWins, rounds)),
-				"tradeKillRate":        percent(ratio(st.tradeKills, rounds)),
-				"tradedDeathRate":      "0%",
-				"timeToTradeSeconds":   0,
+				"tradeKillRate":        percent(ratio(st.tradeKills, played)),
+				"tradedDeathRate":      percent(ratio(st.tradedDeaths, deaths)),
+				"timeToTradeSeconds":   roundFloat(safeDiv(st.tradeTimeSum, st.tradeKills), 1),
 				"clutchWinRate":        "0%",
 				"utilityEffectiveness": percent(ratio(st.enemiesFlashed+st.utilityDamage, max(1, rounds*20))),
 				"utilityDamage":        st.utilityDamage,
@@ -716,16 +807,18 @@ func currentEconomyType(gs dem.GameState) string {
 	}
 }
 
-func currentEconomySnapshot(gs dem.GameState) map[string]int {
+func (s *parserState) currentEconomySnapshot() map[string]int {
 	snapshot := map[string]int{
 		"team_a": 0,
 		"team_b": 0,
 	}
-	for _, p := range gs.Participants().Playing() {
+	for _, p := range s.parser.GameState().Participants().Playing() {
 		if p == nil {
 			continue
 		}
-		snapshot[teamIDForPlayer(p)] += p.EquipmentValueCurrent()
+		// Use the cached team id so equipment values stay with the same team
+		// after the halftime side swap.
+		snapshot[s.ensureStats(p).teamID] += p.EquipmentValueCurrent()
 	}
 	return snapshot
 }
@@ -957,6 +1050,13 @@ func ratio(a int, b int) float64 {
 		return 0
 	}
 	return float64(a) / float64(b)
+}
+
+func safeDiv(sum float64, count int) float64 {
+	if count <= 0 {
+		return 0
+	}
+	return sum / float64(count)
 }
 
 func roundFloat(v float64, places int) float64 {

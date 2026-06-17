@@ -1,4 +1,4 @@
-import { createId, percent, unique } from "./util.js";
+import { createId, unique } from "./util.js";
 import { issueLibrary } from "./parser.js";
 
 const HABIT_FIXES = {

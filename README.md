@@ -27,6 +27,31 @@ Use `PORT=4174 npm start` if the default port is occupied.
 npm test
 ```
 
+## Deploy to a VPS
+
+`deploy.sh` is a one-click deploy for a fresh Debian/Ubuntu (or RHEL-family) VPS.
+It installs Node.js and the Go toolchain version pinned in `go.mod`, builds the
+parser, and runs the app as a systemd service. It is idempotent — re-running it
+pulls the latest code, rebuilds, and restarts.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ttvdKaori/cs2-ai-coach/main/deploy.sh -o deploy.sh
+sudo bash deploy.sh
+```
+
+Override defaults with environment variables:
+
+```sh
+sudo PORT=8080 APP_DIR=/srv/cs2coach RUN_USER=cs2coach bash deploy.sh
+```
+
+Manage the service:
+
+```sh
+journalctl -u cs2-demo-ai-coach -f      # logs
+systemctl restart cs2-demo-ai-coach     # restart
+```
+
 ## Documentation
 
 - [Product Requirements Document](docs/PRD.md)
