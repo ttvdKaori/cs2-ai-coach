@@ -156,10 +156,6 @@ a {
   align-items: center;
 }
 
-.app-shell.has-report #sampleButton {
-  display: none;
-}
-
 .theme-toggle {
   width: 36px;
   height: 36px;
@@ -219,6 +215,23 @@ a {
   flex-direction: column;
   gap: 48px;
   align-items: center;
+}
+
+.empty-state-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.empty-state-header .page-title {
+  flex: 1;
+  margin: 0;
+}
+
+.sample-button {
+  flex-shrink: 0;
 }
 
 .page-title {

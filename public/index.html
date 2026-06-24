@@ -17,7 +17,6 @@
           <button id="themeToggle" class="theme-toggle" type="button" title="切换主题">
             <span id="themeIcon">☀️</span>
           </button>
-          <button id="sampleButton" class="secondary-button" type="button">生成样例报告</button>
           <button id="newAnalysisBtn" class="secondary-button" type="button">+ 新分析</button>
           <button id="copyShareLink" class="secondary-button disabled" type="button" disabled>复制分享链接</button>
           <a id="exportLink" class="secondary-button disabled" href="#" aria-disabled="true">导出 MD</a>
@@ -26,7 +25,10 @@
 
       <main class="workspace" id="workspace">
         <div class="empty-state-container" id="emptyState">
-          <h2 class="page-title">拖放 .dem 文件至此开始分析</h2>
+          <div class="empty-state-header">
+            <h2 class="page-title">拖放 .dem 文件至此开始分析</h2>
+            <button id="sampleButton" class="secondary-button sample-button" type="button">生成样例报告</button>
+          </div>
 
           <label class="drop-zone" id="dropZone">
             <input id="fileInput" type="file" accept=".dem">
