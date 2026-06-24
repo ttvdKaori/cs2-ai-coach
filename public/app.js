@@ -35,7 +35,9 @@ const els = {
   selectionPanel: document.querySelector("#selectionPanel"),
   matchTitle: document.querySelector("#matchTitle"),
   historySection: document.querySelector("#historySection"),
-  newAnalysisBtn: document.querySelector("#newAnalysisBtn")
+  newAnalysisBtn: document.querySelector("#newAnalysisBtn"),
+  themeToggle: document.querySelector("#themeToggle"),
+  themeIcon: document.querySelector("#themeIcon")
 };
 
 els.fileInput.addEventListener("change", () => {
@@ -88,6 +90,10 @@ els.copyShareLink.addEventListener("click", copyShareLink);
 els.newAnalysisBtn.addEventListener("click", () => {
   showEmptyState();
 });
+
+els.themeToggle.addEventListener("click", toggleTheme);
+
+initTheme();
 els.reportContent.addEventListener("click", (event) => {
   const button = event.target.closest("[data-feedback-rating]");
   if (button) submitFeedback(button);
@@ -138,6 +144,41 @@ function showReportView() {
   els.selectionPanel.classList.add("hidden");
   els.workspace.classList.add("has-report");
   els.appShell.classList.add("has-report");
+}
+
+function getPreferredTheme() {
+  const stored = localStorage.getItem("theme");
+  if (stored) return stored;
+  return "light";
+}
+
+function setTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("theme", theme);
+  updateThemeIcon(theme);
+}
+
+function updateThemeIcon(theme) {
+  els.themeIcon.textContent = theme === "dark" ? "🌙" : "☀️";
+  els.themeToggle.title = theme === "dark" ? "切换到日间模式" : "切换到夜间模式";
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme") || "light";
+  const next = current === "dark" ? "light" : "dark";
+  setTheme(next);
+}
+
+function initTheme() {
+  const theme = getPreferredTheme();
+  setTheme(theme);
+
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  mediaQuery.addEventListener("change", (event) => {
+    if (!localStorage.getItem("theme")) {
+      setTheme(event.matches ? "dark" : "light");
+    }
+  });
 }
 
 async function uploadFile(file) {

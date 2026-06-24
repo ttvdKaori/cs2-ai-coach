@@ -1,4 +1,28 @@
 :root {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --surface-2: #f8f9fb;
+  --surface-hover: #f0f2f5;
+  --ink: #1a1d23;
+  --ink-secondary: #4a5568;
+  --muted: #6b7280;
+  --line: #e0e3e7;
+  --ct-blue: #3b7ddd;
+  --ct-blue-hover: #2e68c4;
+  --t-orange: #e68a3c;
+  --t-orange-hover: #d17728;
+  --accent: #3b7ddd;
+  --accent-hover: #2e68c4;
+  --accent-light: rgba(59, 125, 221, 0.1);
+  --good: #10b981;
+  --warn: #f59e0b;
+  --bad: #ef5350;
+  --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="dark"] {
   --bg: #0a0e14;
   --surface: #131820;
   --surface-2: #1a2332;
@@ -69,7 +93,7 @@ a {
 }
 
 .topbar-nav {
-  background: rgba(19, 24, 32, 0.95);
+  background: var(--surface);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
   padding: 12px 24px;
@@ -80,7 +104,11 @@ a {
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-subtle);
+}
+
+[data-theme="dark"] .topbar-nav {
+  background: rgba(19, 24, 32, 0.95);
 }
 
 .topbar-nav.hidden {
@@ -126,6 +154,27 @@ a {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-size: 18px;
+  padding: 0;
+}
+
+.theme-toggle:hover {
+  border-color: var(--ct-blue);
+  background: var(--surface-hover);
+  transform: scale(1.05);
 }
 
 .eyebrow,
@@ -193,7 +242,7 @@ a {
 }
 
 .panel {
-  background: rgba(19, 24, 32, 0.95);
+  background: var(--surface);
   backdrop-filter: blur(12px);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -201,6 +250,10 @@ a {
   padding: 20px;
   height: fit-content;
   transition: all 200ms ease;
+}
+
+[data-theme="dark"] .panel {
+  background: rgba(19, 24, 32, 0.95);
 }
 
 .panel:hover {
@@ -802,11 +855,15 @@ select:focus {
   border: 1px solid var(--line);
   border-left: 4px solid var(--ct-blue);
   border-radius: 12px;
-  background: rgba(19, 24, 32, 0.8);
+  background: var(--surface);
   backdrop-filter: blur(8px);
   padding: 24px;
   box-shadow: var(--shadow);
   transition: all 200ms ease;
+}
+
+[data-theme="dark"] .report-card {
+  background: rgba(19, 24, 32, 0.8);
 }
 
 .report-card:hover {
