@@ -156,6 +156,10 @@ a {
   align-items: center;
 }
 
+.app-shell.has-report #sampleButton {
+  display: none;
+}
+
 .theme-toggle {
   width: 36px;
   height: 36px;

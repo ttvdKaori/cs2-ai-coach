@@ -79,6 +79,7 @@ els.sampleButton.addEventListener("click", async () => {
     type: "application/octet-stream"
   });
   await uploadFile(sample);
+  await new Promise(resolve => setTimeout(resolve, 100));
   autoSelectTeam();
   await createReport();
 });
