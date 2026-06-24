@@ -258,6 +258,17 @@ a {
   opacity: 1;
 }
 
+.drop-zone.drag-invalid {
+  border-color: var(--bad);
+  background: #FEF2F2;
+  animation: shake 0.3s ease;
+}
+
+.drop-zone.drag-invalid::before {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+  opacity: 1;
+}
+
 .drop-zone input {
   position: absolute;
   inline-size: 1px;
@@ -798,6 +809,14 @@ select:focus {
 
 .status-error {
   color: var(--bad);
+  font-weight: 700;
+  animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
 .status-ok {

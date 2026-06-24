@@ -40,6 +40,15 @@ els.fileInput.addEventListener("change", () => {
 ["dragenter", "dragover"].forEach((eventName) => {
   els.dropZone.addEventListener(eventName, (event) => {
     event.preventDefault();
+    const items = event.dataTransfer?.items;
+    if (items && items[0]?.kind === 'file') {
+      const file = items[0].getAsFile();
+      if (file && !file.name.toLowerCase().endsWith('.dem')) {
+        els.dropZone.classList.add("drag-invalid");
+        return;
+      }
+    }
+    els.dropZone.classList.remove("drag-invalid");
     els.dropZone.classList.add("drag-over");
   });
 });
@@ -48,6 +57,7 @@ els.fileInput.addEventListener("change", () => {
   els.dropZone.addEventListener(eventName, (event) => {
     event.preventDefault();
     els.dropZone.classList.remove("drag-over");
+    els.dropZone.classList.remove("drag-invalid");
   });
 });
 
@@ -87,7 +97,12 @@ await loadReportFromUrl();
 
 async function uploadFile(file) {
   if (!file.name.toLowerCase().endsWith(".dem")) {
-    setStatus("只支持 .dem 文件", "error");
+    setStatus("⚠️ 文件格式错误：仅支持 .dem 格式", "error");
+    els.uploadProgress.parentElement.style.display = 'none';
+    setTimeout(() => {
+      setStatus("等待上传", "ok");
+      els.uploadProgress.parentElement.style.display = '';
+    }, 3000);
     return;
   }
 
