@@ -14,9 +14,7 @@ const els = {
   uploadPercent: document.querySelector("#uploadPercent"),
   uploadProgress: document.querySelector("#uploadProgress"),
   sampleButton: document.querySelector("#sampleButton"),
-  refreshHistory: document.querySelector("#refreshHistory"),
   historyList: document.querySelector("#historyList"),
-  pageTitle: document.querySelector("#pageTitle"),
   copyShareLink: document.querySelector("#copyShareLink"),
   exportLink: document.querySelector("#exportLink"),
   parserBadge: document.querySelector("#parserBadge"),
@@ -27,9 +25,17 @@ const els = {
   targetRole: document.querySelector("#targetRole"),
   createReport: document.querySelector("#createReport"),
   selectionHint: document.querySelector("#selectionHint"),
-  setupSection: document.querySelector("#setupSection"),
-  reportSection: document.querySelector("#reportSection"),
-  reportContent: document.querySelector("#reportContent")
+  reportContent: document.querySelector("#reportContent"),
+  appShell: document.querySelector("#appShell"),
+  topbarNav: document.querySelector("#topbarNav"),
+  workspace: document.querySelector("#workspace"),
+  emptyState: document.querySelector("#emptyState"),
+  reportMain: document.querySelector("#reportMain"),
+  matchOverview: document.querySelector("#matchOverview"),
+  selectionPanel: document.querySelector("#selectionPanel"),
+  matchTitle: document.querySelector("#matchTitle"),
+  historySection: document.querySelector("#historySection"),
+  newAnalysisBtn: document.querySelector("#newAnalysisBtn")
 };
 
 els.fileInput.addEventListener("change", () => {
@@ -75,10 +81,13 @@ els.sampleButton.addEventListener("click", async () => {
   await createReport();
 });
 
-els.refreshHistory.addEventListener("click", loadHistory);
 els.createReport.addEventListener("click", createReport);
 els.focusPlayer.addEventListener("change", updateCreateButton);
 els.copyShareLink.addEventListener("click", copyShareLink);
+
+els.newAnalysisBtn.addEventListener("click", () => {
+  showEmptyState();
+});
 els.reportContent.addEventListener("click", (event) => {
   const button = event.target.closest("[data-feedback-rating]");
   if (button) submitFeedback(button);
@@ -94,6 +103,42 @@ document.querySelectorAll(".tab").forEach((tab) => {
 
 await loadHistory();
 await loadReportFromUrl();
+
+function showEmptyState() {
+  els.topbarNav.classList.add("hidden");
+  els.emptyState.classList.remove("hidden");
+  els.reportMain.classList.add("hidden");
+  els.matchOverview.classList.add("hidden");
+  els.workspace.classList.remove("has-report");
+  els.appShell.classList.remove("has-report");
+
+  state.report = null;
+  state.match = null;
+  state.upload = null;
+  state.selectedIds = new Set();
+
+  loadHistory();
+}
+
+function showSetupView() {
+  els.topbarNav.classList.remove("hidden");
+  els.emptyState.classList.add("hidden");
+  els.reportMain.classList.add("hidden");
+  els.matchOverview.classList.remove("hidden");
+  els.selectionPanel.classList.remove("hidden");
+  els.workspace.classList.add("has-report");
+  els.appShell.classList.add("has-report");
+}
+
+function showReportView() {
+  els.topbarNav.classList.remove("hidden");
+  els.emptyState.classList.add("hidden");
+  els.reportMain.classList.remove("hidden");
+  els.matchOverview.classList.remove("hidden");
+  els.selectionPanel.classList.add("hidden");
+  els.workspace.classList.add("has-report");
+  els.appShell.classList.add("has-report");
+}
 
 async function uploadFile(file) {
   if (!file.name.toLowerCase().endsWith(".dem")) {
@@ -111,13 +156,14 @@ async function uploadFile(file) {
   setProgress(0);
   setStatus(`上传 ${file.name}`, "ok");
   els.createReport.disabled = true;
-  els.reportSection.classList.add("hidden");
   els.exportLink.classList.add("disabled");
   els.exportLink.setAttribute("aria-disabled", "true");
   els.exportLink.href = "#";
   els.copyShareLink.classList.add("disabled");
   els.copyShareLink.disabled = true;
   els.targetRole.disabled = false;
+
+  showSetupView();
 
   try {
     const response = await uploadWithProgress(file);
@@ -127,7 +173,7 @@ async function uploadFile(file) {
       ...response.match,
       parserNote: parserNote(response.parser)
     };
-    els.pageTitle.textContent = `${response.match.map} ${response.match.score.team_a}-${response.match.score.team_b}`;
+    els.matchTitle.textContent = `${response.match.map} ${response.match.score.team_a}-${response.match.score.team_b}`;
     els.parserBadge.textContent = response.parser.mode;
     els.parserBadge.classList.toggle("muted", Boolean(response.parser.fallback));
     setStatus("解析完成", "ok");
@@ -206,17 +252,16 @@ async function loadHistory() {
   try {
     const data = await api("/api/reports");
     if (!data.reports.length) {
-      els.historyList.className = "history-list empty-state";
-      els.historyList.textContent = "暂无报告";
+      els.historyList.innerHTML = '<div class="empty-state">暂无报告</div>';
       return;
     }
-    els.historyList.className = "history-list";
     els.historyList.innerHTML = data.reports
       .map(
         (report) => `
-          <button class="history-item" type="button" data-report-id="${escapeHtml(report.id)}">
-            <strong>${escapeHtml(report.map)} ${escapeHtml(report.score)} · ${escapeHtml(report.focusPlayer)}</strong>
-            <span>${escapeHtml(report.selectedTeam.join(" / "))}</span>
+          <button class="history-card ${report.focusTeam || 'team-ct'}" type="button" data-report-id="${escapeHtml(report.id)}">
+            <div class="history-card-title">${escapeHtml(report.map)} ${escapeHtml(report.score)}</div>
+            <div class="history-card-meta">${escapeHtml(report.focusPlayer)}</div>
+            <div class="history-card-meta">${escapeHtml(report.selectedTeam.join(" / "))}</div>
           </button>
         `
       )
@@ -228,8 +273,7 @@ async function loadHistory() {
       });
     });
   } catch (error) {
-    els.historyList.className = "history-list empty-state status-error";
-    els.historyList.textContent = error.message;
+    els.historyList.innerHTML = `<div class="empty-state status-error">${escapeHtml(error.message)}</div>`;
   }
 }
 
@@ -240,7 +284,7 @@ async function loadReportFromUrl() {
     const report = await api(`/api/reports/${encodeURIComponent(reportId)}`);
     showReport(report);
   } catch (error) {
-    els.pageTitle.textContent = "报告链接不可用";
+    els.matchTitle.textContent = "报告链接不可用";
     setStatus(error.message, "error");
   }
 }
@@ -252,13 +296,15 @@ function showReport(report) {
   state.selectedIds = new Set(report.selectedTeam.map((player) => player.id));
   state.activeTab = "overview";
   document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === "overview"));
-  els.reportSection.classList.remove("hidden");
+
+  showReportView();
+
   els.exportLink.classList.remove("disabled");
   els.exportLink.setAttribute("aria-disabled", "false");
   els.exportLink.href = `/api/reports/${report.id}/export`;
   els.copyShareLink.classList.remove("disabled");
   els.copyShareLink.disabled = false;
-  els.pageTitle.textContent = `${report.match.map} 复盘报告`;
+  els.matchTitle.textContent = `${report.match.map} 复盘报告`;
   renderLoadedReportSetup(report);
   renderReport();
 }
