@@ -36,6 +36,23 @@ const MIME_TYPES = {
 await ensureDirectories();
 
 const server = http.createServer(async (req, res) => {
+  const startTime = Date.now();
+  let statusCode = 200;
+
+  const originalWriteHead = res.writeHead;
+  res.writeHead = function(code, ...args) {
+    statusCode = code;
+    return originalWriteHead.apply(this, [code, ...args]);
+  };
+
+  res.on("finish", () => {
+    const elapsed = Date.now() - startTime;
+    const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+    if (!url.pathname.match(/\.(css|js|svg|png|ico)$/)) {
+      console.log(`${req.method} ${url.pathname} ${statusCode} ${elapsed}ms`);
+    }
+  });
+
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
 
@@ -92,6 +109,7 @@ async function ensureDirectories() {
 }
 
 async function handleUpload(req, res, url) {
+  const uploadStart = Date.now();
   const originalName = sanitizeFileName(req.headers["x-file-name"] || url.searchParams.get("filename") || "upload.dem");
   if (!originalName.toLowerCase().endsWith(".dem")) {
     drain(req);
@@ -110,6 +128,8 @@ async function handleUpload(req, res, url) {
 
   const out = fs.createWriteStream(tempPath, { flags: "wx", highWaterMark: 256 * 1024 });
 
+  console.log(`[${uploadId}] Upload started: ${originalName}`);
+
   await new Promise((resolve, reject) => {
     req.on("data", (chunk) => {
       size += chunk.length;
@@ -127,9 +147,12 @@ async function handleUpload(req, res, url) {
       }
     });
     req.on("end", () => {
+      const uploadElapsed = Date.now() - uploadStart;
+      console.log(`[${uploadId}] Upload completed: ${(size / 1024 / 1024).toFixed(2)}MB in ${uploadElapsed}ms`);
       out.end();
     });
     req.on("error", (error) => {
+      console.log(`[${uploadId}] Upload error: ${error.message}`);
       out.destroy();
       reject(error);
     });
@@ -156,10 +179,17 @@ async function handleUpload(req, res, url) {
     storedPath: targetPath,
     createdAt: new Date().toISOString()
   };
+
+  console.log(`[${uploadId}] Parsing started`);
+  const parseStart = Date.now();
+
   let parsed;
   try {
     parsed = await parseUploadedDemo(uploadRecord);
+    const parseElapsed = Date.now() - parseStart;
+    console.log(`[${uploadId}] Parsing completed in ${parseElapsed}ms (mode: ${parsed.parser.mode})`);
   } catch (error) {
+    console.log(`[${uploadId}] Parsing failed: ${error.message}`);
     await writeJson(path.join(UPLOAD_DIR, `${uploadId}.json`), {
       ...uploadRecord,
       parseError: error.message,
