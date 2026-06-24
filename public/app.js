@@ -237,16 +237,24 @@ function uploadWithProgress(file) {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `/api/uploads?filename=${encodeURIComponent(file.name)}`);
     xhr.setRequestHeader("x-file-name", file.name);
+
+    xhr.upload.addEventListener("loadstart", () => {
+      setProgress(1);
+    });
+
     xhr.upload.addEventListener("progress", (event) => {
       if (event.lengthComputable) {
-        setProgress(Math.round((event.loaded / event.total) * 95));
+        const percent = Math.round((event.loaded / event.total) * 95);
+        setProgress(Math.max(1, percent));
       }
     });
+
     xhr.upload.addEventListener("load", () => {
       setProgress(95);
       setStatus("上传完成，解析中", "ok");
       startParseProgress();
     });
+
     xhr.addEventListener("load", () => {
       const payload = parseJson(xhr.responseText);
       if (xhr.status >= 200 && xhr.status < 300) {
@@ -255,7 +263,11 @@ function uploadWithProgress(file) {
         reject(new Error(payload.error || `上传失败：${xhr.status}`));
       }
     });
+
     xhr.addEventListener("error", () => reject(new Error("网络错误，上传失败")));
+    xhr.addEventListener("timeout", () => reject(new Error("上传超时")));
+    xhr.timeout = 120000;
+
     xhr.send(file);
   });
 }

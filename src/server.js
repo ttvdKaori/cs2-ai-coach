@@ -105,20 +105,33 @@ async function handleUpload(req, res, url) {
   let size = 0;
   let tooLarge = false;
 
+  const out = fs.createWriteStream(tempPath, { flags: "wx" });
+
   await new Promise((resolve, reject) => {
-    const out = fs.createWriteStream(tempPath, { flags: "wx" });
     req.on("data", (chunk) => {
       size += chunk.length;
       hash.update(chunk);
       if (size > MAX_UPLOAD_BYTES) {
         tooLarge = true;
+        out.destroy();
         req.destroy(new Error("文件超过 500 MB 上传限制"));
+        reject(new Error("文件超过 500 MB 上传限制"));
+      } else {
+        if (!out.write(chunk)) {
+          req.pause();
+          out.once("drain", () => req.resume());
+        }
       }
     });
-    req.on("error", reject);
+    req.on("end", () => {
+      out.end();
+    });
+    req.on("error", (error) => {
+      out.destroy();
+      reject(error);
+    });
     out.on("error", reject);
     out.on("finish", resolve);
-    req.pipe(out);
   }).catch(async (error) => {
     await fsp.rm(tempPath, { force: true });
     if (tooLarge) {
