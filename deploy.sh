@@ -148,6 +148,12 @@ fetch_code() {
   if [[ -f "${script_dir}/go.mod" && -f "${script_dir}/package.json" ]]; then
     APP_DIR="$script_dir"
     log "Deploying from existing checkout at ${APP_DIR}"
+    # Still update the code even when running from inside the checkout
+    if [[ -d "${APP_DIR}/.git" ]]; then
+      log "Updating code from remote"
+      git -C "$APP_DIR" fetch --depth 1 origin "$BRANCH"
+      git -C "$APP_DIR" reset --hard "origin/${BRANCH}"
+    fi
     return
   fi
 
