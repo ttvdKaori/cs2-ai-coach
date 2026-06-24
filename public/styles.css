@@ -96,8 +96,8 @@ a {
 }
 
 .brand h1 {
-  font-size: 20px;
-  line-height: 1.2;
+  font-size: 19px;
+  line-height: 1.25;
 }
 
 .brand p,
@@ -112,14 +112,14 @@ a {
 }
 
 .brand p {
-  margin: 6px 0 0;
+  margin: 5px 0 0;
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .workspace {
   min-width: 0;
-  padding: 32px 40px;
+  padding: 36px 48px;
 }
 
 .topbar {
@@ -127,20 +127,21 @@ a {
   justify-content: space-between;
   align-items: flex-start;
   gap: 24px;
-  margin-bottom: 32px;
+  margin-bottom: 36px;
 }
 
 .eyebrow {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   font-size: 11px;
   text-transform: uppercase;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
+  color: var(--accent);
 }
 
 .topbar h2 {
-  font-size: 42px;
-  line-height: 1.1;
+  font-size: 36px;
+  line-height: 1.15;
   font-weight: 600;
 }
 
@@ -163,7 +164,7 @@ a {
   border: 1px solid var(--line);
   border-radius: 12px;
   box-shadow: var(--shadow);
-  padding: 24px;
+  padding: 26px;
 }
 
 .panel-heading {
@@ -171,11 +172,11 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .panel h2 {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
 }
 
@@ -199,11 +200,11 @@ a {
 }
 
 .drop-zone {
-  min-height: 164px;
+  min-height: 168px;
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 10px;
+  gap: 11px;
   border: 2px dashed var(--line);
   border-radius: 12px;
   background: var(--surface-2);
@@ -226,8 +227,8 @@ a {
 }
 
 .upload-icon {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   display: grid;
   place-items: center;
   border-radius: 10px;
@@ -240,11 +241,12 @@ a {
 .drop-title {
   font-weight: 600;
   font-size: 15px;
+  color: var(--ink);
 }
 
 .drop-subtitle {
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .progress-wrap {
@@ -403,12 +405,13 @@ a {
 }
 
 .empty-state {
-  padding: 20px;
+  padding: 24px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface-2);
-  line-height: 1.6;
+  line-height: 1.65;
   font-size: 14px;
+  text-align: center;
 }
 
 .match-grid {
@@ -418,23 +421,25 @@ a {
 }
 
 .stat {
-  min-height: 80px;
-  padding: 16px;
+  min-height: 84px;
+  padding: 18px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface-2);
   display: grid;
   align-content: space-between;
-  gap: 10px;
+  gap: 11px;
 }
 
 .stat-label {
   font-size: 12px;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 26px;
   line-height: 1;
   font-weight: 600;
 }
@@ -593,13 +598,13 @@ select:focus {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
-  padding: 24px;
+  padding: 28px;
   box-shadow: var(--shadow);
 }
 
 .report-card h3 {
-  margin: 0 0 14px;
-  font-size: 20px;
+  margin: 0 0 16px;
+  font-size: 22px;
   line-height: 1.3;
   letter-spacing: -0.02em;
   font-family: 'Playfair Display', Georgia, serif;
@@ -607,15 +612,16 @@ select:focus {
 }
 
 .report-card h4 {
-  margin: 20px 0 10px;
-  font-size: 15px;
+  margin: 22px 0 12px;
+  font-size: 16px;
   letter-spacing: -0.01em;
   font-weight: 600;
 }
 
 .report-card p {
-  margin: 0 0 12px;
-  line-height: 1.6;
+  margin: 0 0 14px;
+  line-height: 1.65;
+  font-size: 15px;
 }
 
 .chip-row {
@@ -652,11 +658,12 @@ select:focus {
 .plain-list li,
 .timeline li,
 .assignment-list li {
-  padding: 12px 14px;
+  padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface-2);
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 14px;
 }
 
 .evidence {
@@ -706,7 +713,7 @@ select:focus {
   }
 
   .workspace {
-    padding: 24px;
+    padding: 28px;
   }
 
   .setup-grid {
@@ -721,7 +728,7 @@ select:focus {
 @media (max-width: 620px) {
   .sidebar,
   .workspace {
-    padding: 20px;
+    padding: 24px 20px;
   }
 
   .topbar {
@@ -729,7 +736,7 @@ select:focus {
   }
 
   .topbar h2 {
-    font-size: 32px;
+    font-size: 28px;
   }
 
   .topbar-actions {
