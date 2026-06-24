@@ -95,7 +95,7 @@ async function handleUpload(req, res, url) {
   const originalName = sanitizeFileName(req.headers["x-file-name"] || url.searchParams.get("filename") || "upload.dem");
   if (!originalName.toLowerCase().endsWith(".dem")) {
     drain(req);
-    return sendJson(res, 400, { error: "MVP only accepts .dem files." });
+    return sendJson(res, 400, { error: "仅支持 .dem 格式文件，请上传 CS2 demo 文件" });
   }
 
   const uploadId = createId("upload");
@@ -112,7 +112,7 @@ async function handleUpload(req, res, url) {
       hash.update(chunk);
       if (size > MAX_UPLOAD_BYTES) {
         tooLarge = true;
-        req.destroy(new Error("File is larger than the 500 MB MVP limit."));
+        req.destroy(new Error("文件超过 500 MB 上传限制"));
       }
     });
     req.on("error", reject);
