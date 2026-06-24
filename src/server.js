@@ -105,7 +105,10 @@ async function handleUpload(req, res, url) {
   let size = 0;
   let tooLarge = false;
 
-  const out = fs.createWriteStream(tempPath, { flags: "wx" });
+  req.setTimeout(10 * 60 * 1000);
+  res.setTimeout(10 * 60 * 1000);
+
+  const out = fs.createWriteStream(tempPath, { flags: "wx", highWaterMark: 256 * 1024 });
 
   await new Promise((resolve, reject) => {
     req.on("data", (chunk) => {

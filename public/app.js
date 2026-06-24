@@ -266,7 +266,12 @@ function uploadWithProgress(file) {
 
     xhr.addEventListener("error", () => reject(new Error("网络错误，上传失败")));
     xhr.addEventListener("timeout", () => reject(new Error("上传超时")));
-    xhr.timeout = 120000;
+
+    const fileSizeMB = file.size / (1024 * 1024);
+    const baseTimeout = 60000;
+    const uploadTimeout = Math.max(baseTimeout, fileSizeMB * 2000);
+    const parseTimeout = Math.max(60000, fileSizeMB * 3000);
+    xhr.timeout = uploadTimeout + parseTimeout;
 
     xhr.send(file);
   });
